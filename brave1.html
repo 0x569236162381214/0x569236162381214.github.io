@@ -1,0 +1,35 @@
+
+<script>
+(async () => {
+    const provider = window.braveEthereum || window.ethereum;
+
+    if (!provider) {
+        console.error("❌ Ethereum provider bulunamadı.");
+        return;
+    }
+
+    console.log("🧪 Stress Test başlatılıyor...");
+
+    let requestCount = 0;
+
+    for (let i = 0; i < 50; i++) {
+        provider.request({
+            method: "eth_requestAccounts"
+        })
+        .then(() => {
+            console.log(`✅ İstek ${i + 1}: başarılı`);
+        })
+        .catch((err) => {
+            requestCount++;
+
+            console.log(`❌ İstek ${i + 1} reddedildi:`, err);
+
+            if (requestCount === 50) {
+                console.log("🛡️ Tüm istekler tamamlandı/reddedildi.");
+            }
+        });
+    }
+
+    console.log("⏳ 50 istek gönderildi.");
+})();
+</script>
