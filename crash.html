@@ -1,0 +1,141 @@
+<script>
+(async () => {
+    const p = window.solana || window.braveSolana;
+
+    if (!p) {
+        console.log("Solana provider bulunamadı.");
+        return;
+    }
+
+    const cases = [
+        undefined,
+        null,
+        0,
+        1,
+        true,
+        false,
+        "",
+        "test",
+        [],
+        [1, 2, 3],
+        {},
+        { method: null },
+        { method: 123 },
+        { method: true },
+        { method: "" },
+        { method: "unknown_method" },
+        { method: "connect", params: null },
+        { method: "connect", params: [] },
+        { method: "connect", params: {} },
+        { method: "signMessage", params: null },
+        { method: "signMessage", params: {} },
+        { method: "getContext", params: {} },
+        {
+            method: "__brave_probe__",
+            params: {
+                nested: {
+                    a: undefined,
+                    b: null,
+                    c: [undefined, null, {}]
+                }
+            }
+        }
+    ];
+
+    const R = [];
+
+    for (const input of cases) {
+        const row = {
+            inputType: typeof input,
+            input
+        };
+
+        try {
+            const value =
+                p.request(input);
+
+            row.returnType =
+                typeof value;
+
+            if (
+                value &&
+                typeof value.then === "function"
+            ) {
+                row.promise = true;
+
+                try {
+                    row.result =
+                        await Promise.race([
+                            value,
+                            new Promise((_, reject) =>
+                                setTimeout(
+                                    () =>
+                                        reject(
+                                            new Error(
+                                                "TIMEOUT"
+                                            )
+                                        ),
+                                    1500
+                                )
+                            )
+                        ]);
+                } catch (e) {
+                    row.rejected = {
+                        name: e.name,
+                        message: e.message,
+                        code: e.code,
+                        stack:
+                            typeof e.stack === "string"
+                                ? e.stack.slice(0, 500)
+                                : undefined
+                    };
+                }
+            }
+        } catch (e) {
+            row.thrown = {
+                name: e.name,
+                message: e.message,
+                code: e.code,
+                stack:
+                    typeof e.stack === "string"
+                        ? e.stack.slice(0, 500)
+                        : undefined
+            };
+        }
+
+        R.push(row);
+    }
+
+    console.clear();
+
+    console.log(
+        "%c[BRAVE SOLANA PROVIDER INPUT BOUNDARY]",
+        "font-size:18px;font-weight:bold"
+    );
+
+    console.table(
+        R.map((x, i) => ({
+            i,
+            inputType: x.inputType,
+            returnType: x.returnType,
+            promise: x.promise,
+            rejected:
+                x.rejected?.name ||
+                x.thrown?.name ||
+                null,
+            code:
+                x.rejected?.code ||
+                x.thrown?.code ||
+                null,
+            message:
+                x.rejected?.message ||
+                x.thrown?.message ||
+                null
+        }))
+    );
+
+    console.log(JSON.stringify(R, null, 2));
+
+    window.__braveSolanaInputBoundary = R;
+})();
+</script>
