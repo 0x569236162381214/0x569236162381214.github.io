@@ -1,0 +1,47 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  Options -Indexes
+
+  # HTTPS Yönlendirmesi (Güvenlik için opsiyonel ama önerilir)
+  # RewriteCond %{HTTPS} off
+  # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Dizin sonundaki slash (/) işaretini kaldır (dizin değilse)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+  # Direkt .html yazarak gelenleri uzantısız haline yönlendir (SEO için)
+  RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /([^.]+)\.html\ HTTP
+  RewriteRule ^(.*)\.html$ /$1 [R=301,L]
+
+  # Uzantısız url gelirse, arka planda .html dosyasını çalıştır
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+
+  # Dosya veya klasör bulunamazsa 404 sayfasına yönlendir
+  ErrorDocument 404 /404.html
+</IfModule>
+
+# Güvenlik Önlemleri
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header unset X-Powered-By
+</IfModule>
+
+# Tarayıcı Önbellekleme (Performans için)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/pdf "access plus 1 month"
+  ExpiresByType text/x-javascript "access plus 1 month"
+  ExpiresByType application/x-shockwave-flash "access plus 1 month"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresDefault "access plus 2 days"
+</IfModule>
