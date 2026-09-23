@@ -3,39 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Kilit Ekranı</title>
+    <title>Redmi Kilit Ekranı</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
         
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #000;
+            overflow: hidden; background-color: #000; /* Saf siyah - OLED dostu */
         }
 
         #redmi-pattern-lock {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop') no-repeat center center;
-            background-size: cover;
+            /* Hafif karanlık bir gradyan - HyperOS Dark Mode hissi */
+            background: radial-gradient(circle at top, #1a1a1a 0%, #000000 70%);
             display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-            font-family: 'Roboto', sans-serif; color: white; user-select: none;
-            transition: opacity 0.5s ease;
-            backdrop-filter: blur(10px);
+            font-family: 'Roboto', sans-serif; color: #fff; user-select: none;
+            transition: opacity 0.3s ease;
             touch-action: none;
         }
-        
-        .lock-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4); z-index: -1;
-        }
 
-        .lock-header { margin-top: 12vh; text-align: center; z-index: 10; }
-        .lock-time { font-size: 6rem; font-weight: 300; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .lock-date { font-size: 1.2rem; font-weight: 400; opacity: 0.9; margin-top: 5px; text-shadow: 0 1px 5px rgba(0,0,0,0.3); }
-        .hint-text { margin-top: 20px; opacity: 0.9; font-weight: 400; font-size: 1.1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5); line-height: 1.5; text-align: center;}
+        .lock-header { margin-top: 15vh; text-align: center; z-index: 10; width: 100%; }
+        /* Orijinal MIUI ince saat fontu stili */
+        .lock-time { font-size: 5.5rem; font-weight: 300; letter-spacing: 1px; color: #fff; }
+        .lock-date { font-size: 1.1rem; font-weight: 400; opacity: 0.7; margin-top: 0px; }
         
+        .hint-text { 
+            margin-top: 4vh; opacity: 0.9; font-weight: 400; font-size: 1rem; 
+            line-height: 1.5; text-align: center; color: #ccc;
+            min-height: 3rem; /* Zıplamayı önlemek için sabit alan */
+        }
+        
+        .hint-text.error-text { color: #f44336; } /* Redmi kırmızısı */
+
         .pattern-area {
             position: relative; width: 320px; height: 320px;
-            margin-bottom: 12vh; margin-top: 2vh;
+            margin-bottom: 15vh;
         }
 
         #pattern-svg {
@@ -50,43 +52,49 @@
         }
 
         .dot-wrapper { display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        
+        /* Orijinal küçük noktalar */
         .dot {
-            width: 12px; height: 12px; background: rgba(255,255,255,0.4); border-radius: 50%;
-            transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); pointer-events: none;
+            width: 8px; height: 8px; background: #888; border-radius: 50%;
+            transition: all 0.2s ease; pointer-events: none;
         }
-        .dot-wrapper.active .dot { background: #fff; transform: scale(1.6); box-shadow: 0 0 15px rgba(255,255,255,0.8); }
-        .dot-wrapper.error .dot { background: #ff4d4d; box-shadow: 0 0 15px #ff4d4d; }
+        
+        /* Dokunulduğunda genişleyen beyaz halka */
+        .dot-wrapper.active .dot { 
+            background: #fff; transform: scale(1.8); 
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+        .dot-wrapper.error .dot { background: #f44336; }
 
-        .pattern-line { stroke: rgba(255,255,255,0.7); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-        .pattern-line.error { stroke: #ff4d4d; }
+        .pattern-line { stroke: rgba(255, 255, 255, 0.6); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+        .pattern-line.error { stroke: #f44336; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-12px); }
-            40% { transform: translateX(12px); }
-            60% { transform: translateX(-12px); }
-            80% { transform: translateX(12px); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
         }
         .shake { animation: shake 0.4s ease-in-out; }
         .unlocked { opacity: 0; pointer-events: none; }
         
         .success-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #111; color: lime; display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; font-family: 'Roboto', sans-serif; z-index: -2;
+            background: #000; color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-family: 'Roboto', sans-serif; z-index: -2;
         }
     </style>
 </head>
 <body>
 
-    <div class="success-screen">🔓 Cihaz Kilidi Açıldı!</div>
+    <div class="success-screen">Cihaz kilidi açıldı.</div>
 
     <div id="redmi-pattern-lock">
-        <div class="lock-overlay"></div>
         <div class="lock-header">
             <div class="lock-time" id="lock-time">--:--</div>
             <div class="lock-date" id="lock-date">Yükleniyor...</div>
-            <div class="hint-text" id="hint-text">Tam ekran için tıklayın. (Şifre: L Harfi)<br><span style='color:#ff4d4d;'>Kalan deneme hakkı: 3</span></div>
+            <div class="hint-text" id="hint-text">Kilidi açmak için deseni çizin</div>
         </div>
         
         <div class="pattern-area" id="pattern-area">
@@ -109,7 +117,7 @@
         const container = document.getElementById('redmi-pattern-lock');
         const hintTextEl = document.getElementById('hint-text');
         
-        // Tam Ekrana Geçiş
+        // Tam Ekrana Geçiş (Tıklandığında tetiklenir)
         function requestFullScreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -120,57 +128,65 @@
         container.addEventListener('mousedown', requestFullScreen);
         container.addEventListener('touchstart', requestFullScreen, { passive: true });
 
-        // Saat ve Tarih
+        // Saat ve Tarih formatı
         function updateClock() {
             const now = new Date();
             document.getElementById('lock-time').textContent = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-            document.getElementById('lock-date').textContent = now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+            // Android standart tarih görünümü: "23 Eylül Çarşamba"
+            const dateStr = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+            document.getElementById('lock-date').textContent = dateStr;
         }
         const clockInterval = setInterval(updateClock, 1000);
         updateClock();
 
-        // Kilit Ayarları ve Değişkenleri
-        const correctPattern = [1, 4, 7, 8, 9]; // 'L' Harfi
+        // Kilit Ayarları (L Harfi)
+        const correctPattern = [1, 4, 7, 8, 9]; 
         let path = [];
         let isDrawing = false;
-        let attempts = 3; // Kalan hak
-        let isLockedOut = false; // Süre cezası aktif mi?
+        let attempts = 3; 
+        let isLockedOut = false; 
         let countdownTimer;
         
         const area = document.getElementById('pattern-area');
         const svg = document.getElementById('pattern-svg');
         const dots = document.querySelectorAll('.dot-wrapper');
 
-        // Uyarı Metnini Güncelle
-        function updateHintText() {
-            if (!isLockedOut) {
-                hintTextEl.innerHTML = `Tam ekran için tıklayın. (Şifre: L Harfi)<br><span style='color:#ff4d4d;'>Kalan deneme hakkı: ${attempts}</span>`;
+        // Uyarı Metni Mantığı
+        function updateHintText(isError = false) {
+            if (isLockedOut) return;
+            
+            if (isError) {
+                hintTextEl.innerHTML = `Yanlış desen.<br><span style="font-size: 0.9rem; opacity: 0.8;">Kalan deneme hakkı: ${attempts}</span>`;
+                hintTextEl.classList.add('error-text');
+            } else {
+                hintTextEl.innerHTML = "Kilidi açmak için deseni çizin";
+                hintTextEl.classList.remove('error-text');
             }
         }
 
-        // 30 Saniye Ceza Fonksiyonu
+        // 30 Saniye Cihaz Kilidi
         function startLockout() {
             isLockedOut = true;
             let timeLeft = 30;
-            area.style.opacity = '0.5'; // Desen alanını soluk yap
+            area.style.opacity = '0.3'; 
             
-            hintTextEl.innerHTML = `<span style='color:#ff4d4d; font-weight:bold;'>Çok fazla hatalı deneme!</span><br><span style='color:#ff4d4d;'>Lütfen ${timeLeft} saniye bekleyin.</span>`;
+            hintTextEl.classList.add('error-text');
+            hintTextEl.innerHTML = `Cihaz kilitlendi.<br>Lütfen ${timeLeft} saniye sonra tekrar deneyin.`;
             
             countdownTimer = setInterval(() => {
                 timeLeft--;
-                hintTextEl.innerHTML = `<span style='color:#ff4d4d; font-weight:bold;'>Çok fazla hatalı deneme!</span><br><span style='color:#ff4d4d;'>Lütfen ${timeLeft} saniye bekleyin.</span>`;
+                hintTextEl.innerHTML = `Cihaz kilitlendi.<br>Lütfen ${timeLeft} saniye sonra tekrar deneyin.`;
                 
                 if (timeLeft <= 0) {
                     clearInterval(countdownTimer);
                     isLockedOut = false;
                     attempts = 3;
                     area.style.opacity = '1';
-                    updateHintText();
+                    updateHintText(false);
                 }
             }, 1000);
         }
 
-        // Çizim Koordinatları ve Çizgiler
         function getCenter(el) {
             const rect = el.getBoundingClientRect();
             const areaRect = area.getBoundingClientRect();
@@ -196,13 +212,16 @@
             svg.appendChild(pathEl);
         }
 
-        // Olay Yakalayıcılar
         function handleStart(e) {
-            if (isLockedOut) return; // Kilitliyse çizime izin verme
+            if (isLockedOut) return;
             isDrawing = true;
             path = [];
             dots.forEach(d => d.classList.remove('active', 'error'));
             svg.innerHTML = '';
+            
+            // Eğer daha önceden hata varsa, çizime başlayınca yazıyı temizle
+            updateHintText(false);
+            
             handleMove(e);
         }
 
@@ -237,7 +256,6 @@
             checkPattern();
         }
 
-        // Deseni Doğrula
         function checkPattern() {
             if (path.length === 0) return;
             
@@ -245,24 +263,25 @@
             const correctStr = correctPattern.join('');
 
             if (pathStr === correctStr) {
-                // BAŞARILI
+                // Şifre Doğruysa
                 container.classList.add('unlocked');
                 clearInterval(clockInterval);
                 if (document.fullscreenElement) {
                     document.exitFullscreen().catch(err => console.log(err));
                 }
-                setTimeout(() => container.remove(), 500);
+                setTimeout(() => container.remove(), 400);
             } else {
-                // HATALI
+                // Şifre Yanlışsa
                 attempts--;
                 area.classList.add('shake');
+                
                 dots.forEach(d => { if(path.includes(parseInt(d.getAttribute('data-val')))) d.classList.add('error'); });
                 svg.querySelectorAll('.pattern-line').forEach(l => l.classList.add('error'));
                 
                 if (attempts <= 0) {
-                    startLockout(); // Hak bitti, 30sn ceza başlat
+                    startLockout();
                 } else {
-                    updateHintText(); // Hakkı düşür ve yazıyı güncelle
+                    updateHintText(true);
                 }
 
                 setTimeout(() => {
@@ -274,7 +293,6 @@
             }
         }
 
-        // Dinleyicileri Ekle
         area.addEventListener('mousedown', handleStart);
         document.addEventListener('mousemove', handleMove);
         document.addEventListener('mouseup', handleEnd);
